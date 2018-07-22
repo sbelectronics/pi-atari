@@ -1,15 +1,49 @@
 import os
 import sys
+import threading
 import time
 from smbpi.dpmem_direct import DualPortMemory
 from smbpi.ioexpand import PCF8574
 
 UPPER_ADDR_MASK = ((~0x3F) & 0xFF)
 
+class InterlockManagerThread(threading.Thread):
+    """ The 5200 does not like the interlock being powered up before the mainboard power comes online. All I had to
+        do is use the lousy spare NAND gates, to tie the interlock_in signal with the desired_interlock. But, I
+        didn't, so here we are. Do it in software.
+    """
+
+    def __init__(self, ioexpand):
+        super(InterlockManagerThread,self).__init__()
+        self.daemon = True
+        self.desired_interlock = False
+        self.actual_interlock = "unknown"
+        self.powered_up = False
+        self.ioexpand = ioexpand
+
+    def run(self):
+        while True:
+            self.powered_up = not (self.ioexpand.get_gpio(0) & 0x40)
+
+            should_interlock = self.powered_up and self.desired_interlock
+
+            if (should_interlock != self.actual_interlock):
+                if (should_interlock):
+                    print "set interlock", self.desired_interlock, self.powered_up
+                    self.ioexpand.or_gpio(0, 0x80)
+                else:
+                    print "set interlock", self.desired_interlock, self.powered_up
+                    self.ioexpand.not_gpio(0, 0x80)
+                self.actual_interlock = should_interlock
+
+            time.sleep(0.001)
+
 class AtariCart():
     def __init__(self, bus, ioexpand_addr):
         self.dpmem = DualPortMemory(n_address_bits=9, enable_reset=False)
         self.ioexpand = PCF8574(bus, ioexpand_addr)
+        self.ilock_man = InterlockManagerThread(self.ioexpand)
+        self.ilock_man.start()
 
     def write_block(self, addr, data):
         while (len(data) > 0):
@@ -35,10 +69,26 @@ class AtariCart():
             addr += 512
 
     def interlock_off(self):
-        self.ioexpand.not_gpio(0, 0x80)
+        self.ilock_man.desired_interlock = False
+        tries = 0
+        while (self.ilock_man.actual_interlock != False):
+            time.sleep(0.1)
+            tries=tries+1
+            if (tries==10):
+                print "timeout waiting for interlock to go off"
+                return
+        #self.ioexpand.not_gpio(0, 0x80)
 
     def interlock_on(self):
-        self.ioexpand.or_gpio(0, 0x80)
+        self.ilock_man.desired_interlock = True
+        tries = 0
+        while (self.ilock_man.actual_interlock != True):
+            time.sleep(0.1)
+            tries=tries+1
+            if (tries==10):
+                print "timeout waiting for interlock to go on"
+                return
+        #self.ioexpand.or_gpio(0, 0x80)
 
     def reset(self):
         self.interlock_off()
@@ -69,11 +119,20 @@ def main():
     import smbus
 
     bus = smbus.SMBus(1)
-    cart = AtariCart(bus, 0x20) # TODO: fix addr
-    cart.interlock_off()
-    cart.load_cartridge(sys.argv[1])
-    cart.verify_cartridge(sys.argv[1])
-    cart.interlock_on()
+    cart = AtariCart(bus, 0x20)  # TODO: fix addr
+
+    if (sys.argv[1] == "load"):
+        cart.interlock_off()
+        cart.load_cartridge(sys.argv[2])
+        cart.verify_cartridge(sys.argv[2])
+        cart.interlock_on()
+
+    elif (sys.argv[1] == "verify"):
+        cart.verify_cartridge(sys.argv[2])
+
+    elif (sys.argv[1] == "reset"):
+        cart.reset()
+
 
 if __name__ == "__main__":
     main()

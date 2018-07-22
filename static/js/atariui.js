@@ -10,7 +10,7 @@ function atari() {
     }
 
     setCartridge = function(value) {
-        $.ajax({url: "/stereo/setCartridge?filename=" + value});
+        $.ajax({url: "/atari/loadCartridge?filename=" + value});
     }
 
     initButtons = function() {
@@ -48,9 +48,9 @@ function atari() {
         this.postUI = false;
         try {
             if (settings["cartridge"]) {
-                this.lastCartridgeName = settings["cartridge"]
+                this.lastCartridgeName = settings["cartridge"];
                 this.showedCartridgeComboBox=true;
-                this.updateCardrideComboBox(settings["cartridge"], settings["cartridges"])
+                this.updateCartridgeComboBox(settings["cartridge"], settings["cartridges"])
             }
         }
         finally {
@@ -65,7 +65,7 @@ function atari() {
             type : 'GET',
             success: function(newData) {
                 atari.parseSettings(newData);
-                setTimeout("atari.requestSettings();", 1000);
+                //setTimeout("atari.requestSettings();", 1000);
             },
             error: function() {
                 console.log("error retrieving settings");
@@ -82,6 +82,9 @@ function atari() {
 
     return this;
 }
+
+var scale = window.outerWidth / 450;
+$('head').append('<meta name="viewport" content="width=450, initial-scale=' + scale + ', maximum-scale=' + scale + ', user-scalable=0">');
 
 $(document).ready(function(){
     atari = atari()

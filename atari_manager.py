@@ -12,19 +12,19 @@ from ataricart import AtariCart
 glo_atari = None
 glo_romdir = None
 
+def key_cartridge(x):
+    return x[0].lower()
+
 def list_cartridges():
     filenames = []
     for fn in os.listdir(glo_romdir):
-        if os.path.isfile(fn) and fn.endswith(".bin"):
-            filenames.append(fn)
+        full_fn = os.path.join(glo_romdir, fn)
+        if os.path.isfile(full_fn) and fn.endswith(".bin"):
+            filenames.append( (full_fn, fn[:-4]) )
 
-    filenames = sorted(filenames, key=str.lower)
+    filenames = sorted(filenames, key=key_cartridge)
 
-    result=[]
-    for filename in filenames:
-        result.append( (filename, filename) )
-
-    return result
+    return filenames
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -33,11 +33,10 @@ def parse_args():
     return args
 
 def startup(args):
-    global glo_atari
+    global glo_atari, glo_romdir
    
     bus = smbus.SMBus(1)
 
     glo_atari = AtariCart(bus, 0x20)
 
-    glo_atari = atari
-    glo_romdir = "roms"
+    glo_romdir = os.path.join(os.getcwd(), "roms")
