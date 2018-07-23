@@ -29,10 +29,10 @@ class InterlockManagerThread(threading.Thread):
 
             if (should_interlock != self.actual_interlock):
                 if (should_interlock):
-                    print "set interlock", self.desired_interlock, self.powered_up
+                    print "set interlock on", self.desired_interlock, self.powered_up
                     self.ioexpand.or_gpio(0, 0x80)
                 else:
-                    print "set interlock", self.desired_interlock, self.powered_up
+                    print "set interlock off", self.desired_interlock, self.powered_up
                     self.ioexpand.not_gpio(0, 0x80)
                 self.actual_interlock = should_interlock
 
@@ -40,6 +40,9 @@ class InterlockManagerThread(threading.Thread):
 
 class AtariCart():
     def __init__(self, bus, ioexpand_addr):
+        self.pre_load_delay=0.2
+        self.post_load_delay=0.2
+        self.reset_delay=0.4
         self.dpmem = DualPortMemory(n_address_bits=9, enable_reset=False)
         self.ioexpand = PCF8574(bus, ioexpand_addr)
         self.ilock_man = InterlockManagerThread(self.ioexpand)
@@ -92,7 +95,7 @@ class AtariCart():
 
     def reset(self):
         self.interlock_off()
-        time.sleep(0.1)
+        time.sleep(self.reset_delay)
         self.interlock_on()
 
     def load_cartridge(self, fn):
@@ -123,8 +126,10 @@ def main():
 
     if (sys.argv[1] == "load"):
         cart.interlock_off()
+        time.sleep(cart.pre_load_delay)
         cart.load_cartridge(sys.argv[2])
         cart.verify_cartridge(sys.argv[2])
+        time.sleep(cart.post_load_delay)
         cart.interlock_on()
 
     elif (sys.argv[1] == "verify"):

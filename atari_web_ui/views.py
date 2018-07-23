@@ -23,16 +23,18 @@ def loadCartridge(request):
     if filename:
         glo_last_cartridge=filename
         glo_atari.interlock_off()
-        time.sleep(0.1)
+        time.sleep(glo_atari.pre_load_delay)
         glo_atari.load_cartridge(filename) # os.path.join(glo_romdir, filename))
         glo_atari.verify_cartridge(filename) # os.path.join(glo_romdir, filename))
-        time.sleep(0.1)
+        time.sleep(glo_atari.post_load_delay)
         glo_atari.interlock_on()
 
     return HttpResponse("okey dokey")
 
 def reset(request):
     glo_atari.reset()
+
+    return HttpResponse("okey dokey")
 
 def getStatus(request):
     result = {}

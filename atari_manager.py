@@ -24,6 +24,8 @@ def list_cartridges():
 
     filenames = sorted(filenames, key=key_cartridge)
 
+    filenames = [ ("", "None") ] + filenames
+
     return filenames
 
 def parse_args():
