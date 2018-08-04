@@ -13,10 +13,19 @@
 </head>
 <body>
 
-<div id="now-playing" class="box">
+<div id="Categories" class="box">
 <table>
-<tr><td class="now-playing-label">Cartridge:</td><td id="cartridge"><select onChange="atari.onCartridgeChanged();" id="cartridge-select"></select></td></tr>
+  <tr><td class="now-playing-label">Category:</td><td id="category"><select onChange="atari.onCategoryChanged();" id="category-select"></select></td></tr>
 </table>
+</div>
+
+<div id="Categoridges" class="box">
+<table>
+  <tr><td class="now-playing-label">Cartridge:</td><td id="cartridge"><select onChange="atari.onCartridgeChanged();" id="cartridge-select"></select></td></tr>
+</table>
+</div>
+
+<div id="Controls" class="box">
 <br>
 <button class ="btn btn-blue" id="reset">Reset</button>
 </div>

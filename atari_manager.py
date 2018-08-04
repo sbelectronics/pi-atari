@@ -9,22 +9,30 @@ import os
 import smbus
 from ataricart import AtariCart
 
+ROOT = "root"
+
 glo_atari = None
 glo_romdir = None
 
 def key_cartridge(x):
     return x[0].lower()
 
-def list_cartridges():
+def list_cartridges(dir=None, category=ROOT):
+    if not dir:
+        dir = glo_romdir
+
     filenames = []
-    for fn in os.listdir(glo_romdir):
-        full_fn = os.path.join(glo_romdir, fn)
-        if os.path.isfile(full_fn) and fn.endswith(".bin"):
-            filenames.append( (full_fn, fn[:-4]) )
+    for fn in os.listdir(dir):
+        full_fn = os.path.join(dir, fn)
+        if os.path.isdir(full_fn) and not fn.startswith("."):
+            filenames = filenames + list_cartridges(full_fn, fn)
+        if os.path.isfile(full_fn) and (fn.endswith(".bin") or fn.endswith(".a52")):
+            filenames.append( (full_fn, fn[:-4], category) )
 
     filenames = sorted(filenames, key=key_cartridge)
 
-    filenames = [ ("", "None") ] + filenames
+    if filenames:
+        filenames = [ ("", "None", category) ] + filenames
 
     return filenames
 

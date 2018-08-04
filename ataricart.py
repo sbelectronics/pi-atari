@@ -30,10 +30,10 @@ class InterlockManagerThread(threading.Thread):
             if (should_interlock != self.actual_interlock):
                 if (should_interlock):
                     print "set interlock on", self.desired_interlock, self.powered_up
-                    self.ioexpand.or_gpio(0, 0x80)
+                    self.ioexpand.not_gpio(0, 0x80)
                 else:
                     print "set interlock off", self.desired_interlock, self.powered_up
-                    self.ioexpand.not_gpio(0, 0x80)
+                    self.ioexpand.or_gpio(0, 0x80)
                 self.actual_interlock = should_interlock
 
             time.sleep(0.001)
@@ -100,7 +100,12 @@ class AtariCart():
 
     def load_cartridge(self, fn):
         data = open(fn, "rb").read()
-        if len(data)==16384:
+        if len(data)==8192:
+            self.write_block(0, data)
+            self.write_block(8192, data)
+            self.write_block(16384, data)
+            self.write_block(24576, data)
+        elif len(data)==16384:
             self.write_block(0, data[:8192])
             self.write_block(8192, data[:8192])
             self.write_block(16384, data[8192:])
@@ -128,7 +133,7 @@ def main():
         cart.interlock_off()
         time.sleep(cart.pre_load_delay)
         cart.load_cartridge(sys.argv[2])
-        cart.verify_cartridge(sys.argv[2])
+        #cart.verify_cartridge(sys.argv[2])
         time.sleep(cart.post_load_delay)
         cart.interlock_on()
 

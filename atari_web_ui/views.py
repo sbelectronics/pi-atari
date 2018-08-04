@@ -25,7 +25,7 @@ def loadCartridge(request):
         glo_atari.interlock_off()
         time.sleep(glo_atari.pre_load_delay)
         glo_atari.load_cartridge(filename) # os.path.join(glo_romdir, filename))
-        glo_atari.verify_cartridge(filename) # os.path.join(glo_romdir, filename))
+        #glo_atari.verify_cartridge(filename) # os.path.join(glo_romdir, filename))
         time.sleep(glo_atari.post_load_delay)
         glo_atari.interlock_on()
 
@@ -39,7 +39,15 @@ def reset(request):
 def getStatus(request):
     result = {}
 
+    cartridges = list_cartridges()
+
+    categories = []
+    for cart in cartridges:
+        if cart[2] not in categories:
+            categories.append(cart[2])
+
     result["cartridge"] = glo_last_cartridge
-    result["cartridges"] = list_cartridges()
+    result["cartridges"] = cartridges
+    result["categories"] = categories
 
     return HttpResponse(json.dumps(result), content_type='application/javascript')

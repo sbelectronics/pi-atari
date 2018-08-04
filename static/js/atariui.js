@@ -9,31 +9,56 @@ function atari() {
         }
     }
 
+    onCategoryChanged = function() {
+        console.log("categoryChanged");
+        category_name = $("#category-select").val();
+        if (atari.postUI) {
+            atari.updateCartridgeComboBox("", atari.cartridges, category_name)
+        }
+    }
+
+    onReset = function() {
+        if (atari.postUI) {
+            atari.reset();
+        }
+    }
+
     setCartridge = function(value) {
         $.ajax({url: "/atari/loadCartridge?filename=" + value});
     }
 
-    initButtons = function() {
+    reset = function() {
+        $.ajax({url: "/atari/reset"});
     }
 
-    updateCartridgeComboBox = function(catridge, cartridges) {
+    initButtons = function() {
+        $("#reset").click(function() { atari.reset(); });
+    }
+
+    updateCartridgeComboBox = function(catridge, cartridges, category_filter) {
         html = "";
 
         for (k in cartridges) {
            cartridge_filename = cartridges[k][0];
            cartridge_name = cartridges[k][1];
-           selected="";
+           category_name = cartridges[k][2];
 
-           if (cartridge_name == cartridge) {
-               selected = " selected";
-           } else {
-               selected = "";
+           if (category_name == category_filter) {
+               selected="";
+
+               if (cartridge_name == cartridge) {
+                   selected = " selected";
+               } else {
+                   selected = "";
+               }
+
+               html = html + "<option value=" + encodeURIComponent(cartridge_filename) + selected + ">" + cartridge_name + "</option>";
            }
-
-           html = html + "<option value=" + cartridge_filename + selected + ">" + cartridge_name + "</option>";
         }
 
         $("#cartridge-select").html(html);
+
+        $("#cartridge-select").css("width", "300px");
 
         if (atari.didChosen) {
             $("#cartridge-select").trigger("chosen:updated");
@@ -43,15 +68,36 @@ function atari() {
         }
     }
 
+    updateCategoryComboBox = function(categories) {
+        html = "";
+
+        for (k in categories) {
+           selected="";
+           html = html + "<option value=" + encodeURIComponent(categories[k]) + selected + ">" + categories[k] + "</option>";
+        }
+
+        $("#category-select").html(html);
+
+        if (atari.didChosenCat) {
+            $("#category-select").trigger("chosen:updated");
+        } else {
+            $("#category-select").chosen({disable_search: true});
+            atari.didChosenCat = true;
+        }
+    }
+
     parseSettings = function(settings) {
-        //console.log(settings);
+        console.log(settings);
         this.postUI = false;
         try {
             if (settings["cartridge"]) {
                 this.lastCartridgeName = settings["cartridge"];
-                this.showedCartridgeComboBox=true;
-                this.updateCartridgeComboBox(settings["cartridge"], settings["cartridges"])
             }
+
+            this.updateCategoryComboBox(settings["categories"]);
+            this.cartridges = settings["cartridges"];
+
+            this.updateCartridgeComboBox(settings["cartridge"], settings["cartridges"], settings["categories"][0])
         }
         finally {
             this.postUI = true;
@@ -83,6 +129,7 @@ function atari() {
     return this;
 }
 
+// autoscale the website to fit on the iphone
 var scale = window.outerWidth / 450;
 $('head').append('<meta name="viewport" content="width=450, initial-scale=' + scale + ', maximum-scale=' + scale + ', user-scalable=0">');
 
