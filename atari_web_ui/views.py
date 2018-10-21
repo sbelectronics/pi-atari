@@ -2,7 +2,7 @@ from django.template import RequestContext, loader
 import json
 import time
 
-from atari_manager import glo_atari, glo_romdir, list_cartridges
+from atari_manager import glo_atari_manager
 
 # Create your views here.
 
@@ -21,33 +21,28 @@ def loadCartridge(request):
     filename = request.GET.get("filename", None)
 
     if filename:
-        glo_last_cartridge=filename
-        glo_atari.interlock_off()
-        time.sleep(glo_atari.pre_load_delay)
-        glo_atari.load_cartridge(filename) # os.path.join(glo_romdir, filename))
-        #glo_atari.verify_cartridge(filename) # os.path.join(glo_romdir, filename))
-        time.sleep(glo_atari.post_load_delay)
-        glo_atari.interlock_on()
+        glo_atari_manager.load_cartridge(filename)
 
     return HttpResponse("okey dokey")
 
+def loadDelta(request):
+    amount = int(request.GET.get("delta", "0"))
+    if amount:
+        glo_atari_manager.load_delta(amount)
+        return HttpResponse("okey dokey")
+
+    return HttpResponse("nope")
+
 def reset(request):
-    glo_atari.reset()
+    glo_atari_manager.reset()
 
     return HttpResponse("okey dokey")
 
 def getStatus(request):
     result = {}
 
-    cartridges = list_cartridges()
-
-    categories = []
-    for cart in cartridges:
-        if cart[2] not in categories:
-            categories.append(cart[2])
-
-    result["cartridge"] = glo_last_cartridge
-    result["cartridges"] = cartridges
-    result["categories"] = categories
+    result["cartridge"] = glo_atari_manager.last_cartridge
+    result["cartridges"] = glo_atari_manager.cartridges
+    result["categories"] = glo_atari_manager.categories
 
     return HttpResponse(json.dumps(result), content_type='application/javascript')

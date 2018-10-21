@@ -5,6 +5,7 @@ from atari_web_ui import views
 urlpatterns = patterns('',
     url(r'^$', views.index, name='index'),
     url(r'^loadCartridge$', views.loadCartridge, name='loadCartridge'),
+    url(r'^loadDelta$', views.loadDelta, name='loadDelta'),
     url(r'^reset$', views.reset, name='reset'),
     url(r'^getStatus$', views.getStatus, name='getStatus'),
 )

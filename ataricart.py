@@ -41,9 +41,9 @@ class InterlockManagerThread(threading.Thread):
 class AtariCart():
     def __init__(self, bus, ioexpand_addr):
         self.pre_load_delay=0.2
-        self.post_load_delay=0.2
-        self.reset_delay=0.4
-        self.dpmem = DualPortMemory(n_address_bits=9, enable_reset=False)
+        self.post_load_delay=0.3
+        self.reset_delay=0.5
+        self.dpmem = DualPortMemory(n_address_bits=9, enable_reset=False, support_read=False)
         self.ioexpand = PCF8574(bus, ioexpand_addr)
         self.ilock_man = InterlockManagerThread(self.ioexpand)
         self.ilock_man.start()
